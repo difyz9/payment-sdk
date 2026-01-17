@@ -7,6 +7,7 @@ type PaymentRequest struct {
 	Subject   string  `json:"subject"`             // 支付主题/商品名称
 	Amount    float64 `json:"amount"`              // 支付金额
 	PayWay    string  `json:"payWay"`              // 支付方式 alipay/wechat/paypal
+	ReturnURL string  `json:"returnUrl,omitempty"` // 支付成功返回地址（支付宝支付时使用）
 	OrderType string  `json:"orderType,omitempty"` // 订单类型
 	UserID    string  `json:"userId,omitempty"`    // 用户ID（可选）
 	Extra     string  `json:"extra,omitempty"`     // 额外信息（JSON格式）

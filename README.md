@@ -142,9 +142,13 @@ func (c *Client) CreatePayment(req *PaymentRequest) (*PaymentData, error)
 - `req.Subject` (string, 必填) - 商品名称
 - `req.Amount` (float64, 必填) - 支付金额（元）
 - `req.PayWay` (string, 必填) - 支付方式：`alipay`/`wechat`/`paypal`
+- `req.ReturnURL` (string, 可选) - 支付成功返回地址（支付宝支付时使用）
 - `req.OrderType` (string, 可选) - 订单类型
 - `req.UserID` (string, 可选) - 用户ID
 - `req.Extra` (string, 可选) - 额外信息（JSON格式）
+- `req.Currency` (string, 可选) - 货币代码（PayPal支付时使用，默认USD）
+- `req.BrandName` (string, 可选) - 品牌名称（PayPal支付时显示）
+- `req.CancelURL` (string, 可选) - 取消支付返回地址（PayPal支付时使用）
 
 **返回：**
 - `PaymentData` - 支付数据，包含支付链接和订单号
@@ -201,12 +205,23 @@ req := &paymentsdk.PaymentRequest{
     Subject:   "测试商品",
     Amount:    0.01,
     PayWay:    paymentsdk.PayWayAlipay,
+    ReturnURL: "https://mystore.com/payment/success", // 支付成功后跳转的URL（可选）
     OrderType: "product",
     UserID:    "user123",
 }
 
 paymentData, err := client.CreatePayment(req)
 ```
+
+**自定义返回地址说明：**
+
+支付宝支付完成后，用户会被重定向到指定的 `ReturnURL`。如果不设置，则使用服务端配置的默认地址。
+
+- **使用场景：** 不同商品跳转到不同的成功页面、移动端和PC端使用不同的返回地址等
+- **注意事项：**
+  - ReturnURL 必须是公网可访问的 HTTPS 地址（生产环境）
+  - 支付宝会在 URL 后面追加支付结果参数
+  - 这是同步返回，仅用于页面跳转，订单状态以异步通知为准
 
 ### 微信支付
 
@@ -316,6 +331,71 @@ if err != nil {
 ```
 
 ## 高级配置
+
+### 支付宝自定义返回地址
+
+支付宝支付完成后，可以通过 `ReturnURL` 自定义用户跳转的页面：
+
+```go
+req := &paymentsdk.PaymentRequest{
+    Subject:   "VIP会员充值",
+    Amount:    99.00,
+    PayWay:    paymentsdk.PayWayAlipay,
+    ReturnURL: "https://mystore.com/vip/success?from=alipay&plan=monthly",
+    OrderType: "vip",
+    UserID:    "user_12345",
+}
+
+paymentData, err := client.CreatePayment(req)
+```
+
+**ReturnURL 参数说明：**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| ReturnURL | string | 支付成功后的跳转地址（可选） |
+
+**使用场景：**
+1. **不同商品不同页面** - VIP充值跳转到会员中心，商品购买跳转到订单详情
+2. **携带自定义参数** - 在URL中携带来源、商品ID等信息
+3. **移动端和PC端区分** - 根据平台跳转到对应的成功页面
+4. **A/B测试** - 不同用户跳转到不同的落地页
+
+**注意事项：**
+- 如果不设置 `ReturnURL`，将使用服务端配置的默认返回地址
+- 生产环境必须使用 HTTPS 协议
+- ReturnURL 必须是公网可访问的地址
+- 支付宝会在URL后追加支付结果参数（如 `out_trade_no`、`trade_no` 等）
+- ReturnURL 是同步返回，仅用于页面展示，订单状态应以异步通知为准
+- 建议在返回页面再次调用 `QueryOrder` 验证订单状态
+
+**完整示例：**
+
+```go
+// 创建订单
+req := &paymentsdk.PaymentRequest{
+    Subject:   "iPhone 15 Pro",
+    Amount:    7999.00,
+    PayWay:    paymentsdk.PayWayAlipay,
+    ReturnURL: "https://shop.example.com/order/success?product=iphone15",
+    OrderType: "product",
+    UserID:    "user_67890",
+}
+
+paymentData, err := client.CreatePayment(req)
+if err != nil {
+    return err
+}
+
+// 用户完成支付后会跳转到：
+// https://shop.example.com/order/success?product=iphone15&out_trade_no=xxx&trade_no=xxx&...
+
+// 在返回页面中，建议再次验证订单状态
+orderStatus, err := client.QueryOrder(paymentData.OrderNo)
+if err == nil && orderStatus.IsPaymentSuccess() {
+    // 显示支付成功页面
+}
+```
 
 ### 自定义 HTTP 客户端
 

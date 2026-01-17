@@ -1,4 +1,4 @@
-module github.com/difyz9/pay-unify/examples/payment-sdk
+module github.com/difyz9/payment-sdk
 
 go 1.19
 

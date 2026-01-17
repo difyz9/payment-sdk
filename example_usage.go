@@ -27,6 +27,7 @@ func main() {
 		Subject:   "VIP会员-月卡",
 		Amount:    0.01,
 		PayWay:    paymentsdk.PayWayAlipay,
+		ReturnURL: "https://mystore.com/payment/success", // 支付成功后跳转的URL
 		OrderType: "vip",
 		UserID:    "user_12345",
 		Extra:     `{"productId":"vip_001","period":"30days"}`,
