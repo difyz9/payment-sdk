@@ -45,7 +45,7 @@ type OrderStatusData struct {
 	OrderNo   string  `json:"orderNo"`   // 订单号
 	Subject   string  `json:"subject"`   // 商品名称
 	Amount    float64 `json:"amount"`    // 订单金额
-	Status    int     `json:"status"`    // 订单状态：1-未支付，2-已支付，201-已关闭
+	Status    int     `json:"status"`    // 订单状态：1-未支付，2-已扫码，101-支付失败，201-支付成功，300-已关闭，400-已退款
 	PayWay    string  `json:"payWay"`    // 支付方式
 	TradeNo   string  `json:"tradeNo"`   // 支付平台交易号
 	PayTime   int64   `json:"payTime"`   // 支付时间戳
@@ -99,11 +99,14 @@ type PollOptions struct {
 	OnError    func(retry int, err error)              // 查询出错时的回调
 }
 
-// 订单状态常量
+// 订单状态常量（与 pay-unify-backend 保持一致）
 const (
 	OrderStatusNotPaid     = 1   // 未支付
-	OrderStatusPaidSuccess = 2   // 已支付
-	OrderStatusClosed      = 201 // 已关闭
+	OrderStatusScanned     = 2   // 已扫码
+	OrderStatusPaidFailed  = 101 // 支付失败
+	OrderStatusPaidSuccess = 201 // 支付成功
+	OrderStatusClosed      = 300 // 已关闭
+	OrderStatusRefunded    = 400 // 已退款
 )
 
 // 支付方式常量
@@ -118,10 +121,16 @@ func GetOrderStatusText(status int) string {
 	switch status {
 	case OrderStatusNotPaid:
 		return "未支付"
+	case OrderStatusScanned:
+		return "已扫码"
+	case OrderStatusPaidFailed:
+		return "支付失败"
 	case OrderStatusPaidSuccess:
-		return "已支付"
+		return "支付成功"
 	case OrderStatusClosed:
 		return "已关闭"
+	case OrderStatusRefunded:
+		return "已退款"
 	default:
 		return "未知状态"
 	}
@@ -132,12 +141,27 @@ func (o *OrderStatusData) IsPaymentSuccess() bool {
 	return o.Status == OrderStatusPaidSuccess
 }
 
+// IsPaymentFailed 判断订单支付是否失败
+func (o *OrderStatusData) IsPaymentFailed() bool {
+	return o.Status == OrderStatusPaidFailed
+}
+
 // IsClosed 判断订单是否已关闭
 func (o *OrderStatusData) IsClosed() bool {
 	return o.Status == OrderStatusClosed
 }
 
+// IsRefunded 判断订单是否已退款
+func (o *OrderStatusData) IsRefunded() bool {
+	return o.Status == OrderStatusRefunded
+}
+
 // IsPending 判断订单是否待支付
 func (o *OrderStatusData) IsPending() bool {
 	return o.Status == OrderStatusNotPaid
+}
+
+// IsScanned 判断订单是否已扫码
+func (o *OrderStatusData) IsScanned() bool {
+	return o.Status == OrderStatusScanned
 }

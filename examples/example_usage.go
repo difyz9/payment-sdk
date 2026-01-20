@@ -55,7 +55,7 @@ func main() {
 	} else {
 		fmt.Printf("✅ 查询成功\n")
 		fmt.Printf("   订单号: %s\n", orderStatus.OrderNo)
-		fmt.Printf("   状态: %s (%d)\n", paymentsdk.GetOrderStatusText(orderStatus.Status), orderStatus.Status)
+		fmt.Printf("   状态: %s (%d)\n", psdk.GetOrderStatusText(orderStatus.Status), orderStatus.Status)
 		fmt.Printf("   金额: ¥%.2f\n\n", orderStatus.Amount)
 	}
 
@@ -63,11 +63,11 @@ func main() {
 	fmt.Println("【示例 3】轮询查询订单状态")
 	fmt.Println("请在浏览器中完成支付，程序将自动检测支付状态...\n")
 
-	finalStatus, err := client.PollOrderStatus(orderNo, &paymentsdk.PollOptions{
+	finalStatus, err := client.PollOrderStatus(orderNo, &psdk.PollOptions{
 		Interval:   5 * time.Second,
 		MaxRetries: 12,
-		OnCheck: func(retry int, status *paymentsdk.OrderStatusData) {
-			fmt.Printf("   [%d/12] %s\n", retry, paymentsdk.GetOrderStatusText(status.Status))
+		OnCheck: func(retry int, status *psdk.OrderStatusData) {
+			fmt.Printf("   [%d/12] %s\n", retry, psdk.GetOrderStatusText(status.Status))
 		},
 		OnError: func(retry int, err error) {
 			fmt.Printf("   [%d/12] 查询出错: %v\n", retry, err)
@@ -87,7 +87,7 @@ func main() {
 
 	// ========== 示例 4: 获取订单列表 ==========
 	fmt.Println("【示例 4】获取订单列表")
-	listReq := &paymentsdk.OrderListRequest{
+	listReq := &psdk.OrderListRequest{
 		Page:     1,
 		PageSize: 5,
 	}
@@ -99,17 +99,17 @@ func main() {
 		fmt.Printf("✅ 共找到 %d 条订单\n", listResp.Total)
 		for i, order := range listResp.List {
 			fmt.Printf("   %d. 订单号: %s | 金额: ¥%.2f | 状态: %s\n",
-				i+1, order.OrderNo, order.Amount, paymentsdk.GetOrderStatusText(order.Status))
+				i+1, order.OrderNo, order.Amount, psdk.GetOrderStatusText(order.Status))
 		}
 		fmt.Println()
 	}
 
 	// ========== 示例 5: 创建微信支付订单 ==========
 	fmt.Println("【示例 5】创建微信支付订单")
-	wechatReq := &paymentsdk.PaymentRequest{
+	wechatReq := &psdk.PaymentRequest{
 		Subject:   "测试商品",
 		Amount:    0.01,
-		PayWay:    paymentsdk.PayWayWechat,
+		PayWay:    psdk.PayWayWechat,
 		OrderType: "product",
 		UserID:    "user_12345",
 	}

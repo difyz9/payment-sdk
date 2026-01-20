@@ -296,8 +296,11 @@ refundResp, err := client.RefundOrder(refundReq)
 | 状态码 | 常量 | 说明 |
 |--------|------|------|
 | 1 | `OrderStatusNotPaid` | 未支付 |
-| 2 | `OrderStatusPaidSuccess` | 已支付 |
-| 201 | `OrderStatusClosed` | 已关闭 |
+| 2 | `OrderStatusScanned` | 已扫码 |
+| 101 | `OrderStatusPaidFailed` | 支付失败 |
+| 201 | `OrderStatusPaidSuccess` | 支付成功 |
+| 300 | `OrderStatusClosed` | 已关闭 |
+| 400 | `OrderStatusRefunded` | 已退款 |
 
 ### 状态判断辅助方法
 
@@ -308,12 +311,24 @@ if orderStatus.IsPaymentSuccess() {
     fmt.Println("支付成功")
 }
 
+if orderStatus.IsPaymentFailed() {
+    fmt.Println("支付失败")
+}
+
 if orderStatus.IsPending() {
     fmt.Println("待支付")
 }
 
+if orderStatus.IsScanned() {
+    fmt.Println("已扫码")
+}
+
 if orderStatus.IsClosed() {
     fmt.Println("已关闭")
+}
+
+if orderStatus.IsRefunded() {
+    fmt.Println("已退款")
 }
 ```
 
